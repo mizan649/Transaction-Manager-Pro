@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Transaction Manager Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ===== Design tokens ===== */
+  :root{
+    --bg:#f6f5ff;
+    --fg:#15132b;
+    --muted:#6b6890;
+    --card:#ffffffcc;
+    --border:#e7e3ff;
+    --primary:#6d3df5;
+    --primary-glow:#a17bff;
+    --success:#16a34a;
+    --danger:#e11d48;
+    --warning:#f59e0b;
+    --radius:14px;
+    --shadow-card:0 4px 20px -6px rgba(60,40,160,.12);
+    --shadow-hover:0 14px 36px -10px rgba(80,40,200,.28);
+    --shadow-glow:0 0 40px -8px rgba(120,80,255,.55);
+    --gradient-primary:linear-gradient(135deg,#6d3df5,#a17bff);
+    --gradient-success:linear-gradient(135deg,#16a34a,#4ade80);
+    --gradient-danger:linear-gradient(135deg,#e11d48,#fb7185);
+    --gradient-hero:linear-gradient(135deg,#6d3df5,#c026d3,#ec4899);
+    --gradient-mesh:
+      radial-gradient(at 18% 0%, rgba(140,90,255,.28) 0, transparent 55%),
+      radial-gradient(at 82% 5%, rgba(236,72,153,.22) 0, transparent 55%),
+      radial-gradient(at 0% 60%, rgba(56,189,248,.18) 0, transparent 55%);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Inter',system-ui,'Segoe UI',sans-serif;
+    background:var(--bg);
+    background-image:var(--gradient-mesh);
+    background-attachment:fixed;
+    color:var(--fg);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;cursor:pointer;border:none}
+  input,select{font-family:inherit;outline:none}
+
+  /* ===== Decorative blobs ===== */
+  .blob{position:fixed;border-radius:50%;filter:blur(80px);opacity:.4;pointer-events:none;z-index:0;animation:float 8s ease-in-out infinite}
+  .blob.b1{width:340px;height:340px;background:#a17bff;top:-80px;left:-80px}
+  .blob.b2{width:300px;height:300px;background:#ec4899;top:30%;right:-100px;animation-delay:-3s}
+  .blob.b3{width:280px;height:280px;background:#38bdf8;bottom:-100px;left:30%;animation-delay:-5s}
+
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-22px)}}
+  @keyframes pulseGlow{0%,100%{box-shadow:0 0 20px -5px rgba(120,80,255,.45)}50%{box-shadow:0 0 40px -5px rgba(120,80,255,.85)}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+  @keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+
+  .fade-in{animation:fadeIn .5s ease-out both}
+  .slide-up{animation:slideUp .5s cubic-bezier(.16,1,.3,1) both}
+  .scale-in{animation:scaleIn .3s cubic-bezier(.16,1,.3,1) both}
+
+  /* ===== Layout ===== */
+  .container{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:24px 20px 60px}
+
+  /* Header */
+  .header{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    ;backdrop-filter:blur(14px);
+    border:1px solid var(--border);border-radius:var(--radius);
+    padding:14px 18px;box-shadow:var(--shadow-card);
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-icon{
+    width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;
+    background:var(--gradient-primary);animation:pulseGlow 2.4s ease-in-out infinite;font-size:20px;
+  }
+  .brand h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-.01em}
+  .brand small{color:var(--muted);font-size:12px}
+  .header-actions{display:flex;align-items:center;gap:8px}
+  .user-pill{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#f1edff;color:#4b2bb7;font-size:12px;font-weight:600}
+
+  /* Buttons */
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;
+    font-weight:600;font-size:14px;transition:transform .2s ease, box-shadow .2s ease, opacity .2s;
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn-primary{background:var(--gradient-primary);color:#fff;box-shadow:0 6px 18px -6px rgba(109,61,245,.6)}
+  .btn-primary:hover{box-shadow:var(--shadow-hover)}
+  .btn-outline{background:#fff;color:var(--fg);border:1px solid var(--border)}
+  .btn-outline:hover{background:#faf8ff}
+  .btn-danger{background:var(--gradient-danger);color:#fff}
+  .btn-ghost{background:transparent;color:var(--muted);padding:6px 10px}
+  .btn-ghost:hover{color:var(--fg)}
+  .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none}
+
+  /* Hero */
+  .hero{margin-top:24px;text-align:center;animation:fadeIn .6s ease-out both}
+  .hero h2{
+    font-size:clamp(28px,4.5vw,44px);margin:0;font-weight:800;letter-spacing:-.02em;
+    background:var(--gradient-hero);-webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .hero .clock{margin-top:8px;color:var(--muted);font-size:30px;font-variant-numeric:tabular-nums}
+
+  /* Summary cards */
+  .grid{display:grid;gap:16px;margin-top:24px}
+  .grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .grid.cols-staff{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+  @media(max-width:720px){.grid.cols-3{grid-template-columns:1fr}}
+
+  .card{
+    background:var(--card);backdrop-filter:blur(14px);
+    border:1px solid var(--border);border-radius:var(--radius);
+    padding:18px;box-shadow:var(--shadow-card);transition:transform .3s ease, box-shadow .3s ease;
+    position:relative;overflow:hidden;
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover)}
+  .card .label{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:13px;font-weight:500}
+  .card .value{margin-top:8px;font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .card .icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#fff;font-size:16px}
+  .icon.purple{background:var(--gradient-primary)}
+  .icon.green{background:var(--gradient-success)}
+  .icon.red{background:var(--gradient-danger)}
+  .value.green{color:var(--success)}
+  .value.red{color:var(--danger)}
+  .value.purple{background:var(--gradient-hero);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .staff-card .name{font-weight:700;font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .staff-card .row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:4px 0}
+  .staff-card .row b{color:var(--fg);font-weight:600}
+  .staff-card .balance{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);display:flex;justify-content:space-between;font-weight:700}
+  .avatar{width:28px;height:28px;border-radius:50%;background:var(--gradient-primary);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
+
+  /* Filters */
+  .filters{
+    margin-top:24px;display:flex;gap:10px;flex-wrap:wrap;
+    background:var(--card);backdrop-filter:blur(14px);
+    border:1px solid var(--border);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow-card);
+  }
+  .input,.select{
+    padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:14px;color:var(--fg);
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .input:focus,.select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(109,61,245,.15)}
+  .input{flex:1;min-width:180px}
+
+  /* Table */
+  .table-wrap{margin-top:16px;background:var(--card);backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-card);overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+  thead{background:linear-gradient(180deg,#f5f1ff,#ffffff)}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border)}
+  th{font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  tbody tr{transition:background .15s}
+  tbody tr:hover{background:#faf8ff}
+  tbody tr:last-child td{border-bottom:none}
+  .scroll-x{overflow-x:auto}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600}
+  .badge.give{background:#dcfce7;color:#15803d}
+  .badge.take{background:#ffe4e6;color:#be123c}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+
+  /* Footer */
+  .footer{margin-top:30px;text-align:center;color:var(--muted);font-size:12px}
+
+  /* Modal */
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(20,15,50,.55);backdrop-filter:blur(6px);
+    display:none;align-items:center;justify-content:center;z-index:50;padding:20px;
+    animation:fadeIn .2s ease-out;
+  }
+  .modal-backdrop.open{display:flex}
+  .modal{
+    background:#fff;border-radius:18px;width:100%;max-width:440px;padding:24px;
+    box-shadow:0 30px 80px -20px rgba(40,20,100,.4);animation:scaleIn .3s ease-out;
+  }
+  .modal h3{margin:0 0 4px;font-size:18px;font-weight:700}
+  .modal p.sub{margin:0 0 16px;color:var(--muted);font-size:13px}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+  .field .input,.field .select{width:100%}
+  .modal-actions{display:flex;gap:8px;margin-top:16px}
+  .modal-actions .btn{flex:1;justify-content:center}
+
+  /* Toast */
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:#15132b;color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;
+    opacity:0;transition:all .3s ease;z-index:100;box-shadow:var(--shadow-hover);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.error{background:#b91c1c}
+  .toast.success{background:#15803d}
+</style>
+</head>
+<body>
+
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header slide-up">
+    <div class="brand">
+      <div class="brand-icon">💼</div>
+      <div>
+        <h1>Transaction Manager <span style="color:var(--primary)">Pro</span></h1>
+        <small>Live staff balance tracker</small>
+      </div>
+    </div>
+    <div class="header-actions" id="headerActions">
+      <button class="btn btn-primary" id="loginBtn">🔐 Admin sign in</button>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="hero">
+    <h2>Smart transactions, in real time</h2>
+    <div class="clock"  id="clock">—</div>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="grid cols-3">
+    <div class="card slide-up">
+      <div class="label">Total Given (দিয়েছে) <span class="icon green">↑</span></div>
+      <div class="value green" id="totalGive">৳0</div>
+    </div>
+    <div class="card slide-up" style="animation-delay:.05s">
+      <div class="label">Total Taken (নিয়েছে) <span class="icon red">↓</span></div>
+      <div class="value red" id="totalTake">৳0</div>
+    </div>
+    <div class="card slide-up" style="animation-delay:.1s">
+      <div class="label">Net Balance <span class="icon purple">⚖</span></div>
+      <div class="value purple" id="totalBalance">৳0</div>
+    </div>
+  </div>
+
+  <!-- Per-staff -->
+  <h3 style="margin:28px 0 0;font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Per-staff summary</h3>
+  <div class="grid cols-staff" id="staffGrid"></div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <input type="text" class="input" id="search" placeholder="🔍 Search by staff or note..." />
+    <select class="select" id="staffFilter">
+      <option value="">All staff</option>
+    </select>
+    <select class="select" id="typeFilter">
+      <option value="">All types</option>
+      <option value="give">দিয়েছে (Give)</option>
+      <option value="take">নিয়েছে (Take)</option>
+    </select>
+    <button class="btn btn-primary" id="addBtn" style="display:none">+ Add transaction</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="scroll-x">
+      <table>
+        <thead>
+          <tr>
+            <th>Staff</th><th>Type</th><th>Amount</th><th>Reason</th><th>Time</th><th id="actionsHead" style="display:none">Action</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="emptyMsg">No transactions yet.</div>
+  </div>
+
+  <div class="footer">© <span id="year"></span> Transaction Manager Pro · Built with Firebase</div>
+</div>
+
+<!-- Login Modal -->
+<div class="modal-backdrop" id="loginModal">
+  <div class="modal">
+    <h3>Admin sign in</h3>
+    <p class="sub">Enter your admin credentials to manage transactions.</p>
+    <form id="loginForm">
+      <div class="field"><label>Email</label><input class="input" type="email" id="loginEmail" required /></div>
+      <div class="field"><label>Password</label><input class="input" type="password" id="loginPassword" required /></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" data-close>Cancel</button>
+        <button type="submit" class="btn btn-primary" id="loginSubmit">Sign in</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Transaction Modal -->
+<div class="modal-backdrop" id="addModal">
+  <div class="modal">
+    <h3>Add transaction</h3>
+    <p class="sub">Record a give or take entry for a staff member.</p>
+    <form id="addForm">
+      <div class="field">
+        <label>Staff</label>
+        <select class="select" id="txStaff"></select>
+      </div>
+      <div class="field">
+        <label>Type</label>
+        <select class="select" id="txType">
+          <option value="give">দিয়েছে (Give)</option>
+          <option value="take">নিয়েছে (Take)</option>
+        </select>
+      </div>
+      <div class="field"><label>Amount (৳)</label><input class="input" type="number" id="txAmount" min="1" required /></div>
+      <div class="field"><label>Reason</label><input class="input" type="text" id="txNote" placeholder="Optional note" /></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" data-close>Cancel</button>
+        <button type="submit" class="btn btn-primary" id="addSubmit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase (compat for plain HTML) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+/* ============ Firebase config ============ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCztqUkKjz-fd2iRLnDUPiZ1X5HOFCGHGQ",
+  authDomain: "transaction-manager-de37d.firebaseapp.com",
+  projectId: "transaction-manager-de37d",
+  storageBucket: "transaction-manager-de37d.firebasestorage.app",
+  messagingSenderId: "958727433394",
+  appId: "1:958727433394:web:9881b2a2d6fc6ed32eadab",
+  measurementId: "G-BVZZMKB0CZ"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const ADMIN_EMAIL = "mizan.universelink@gmail.com";
+const STAFF_LIST = ["Jonayed","Hridoy","Anas","Arif","Arman","Saiful","Falan","Mizan","Sujon Sir", "Others"];
+
+/* ============ DOM helpers ============ */
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => "৳" + Number(n||0).toLocaleString();
+
+function showToast(msg, type=""){
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast show " + type;
+  setTimeout(()=> t.className = "toast " + type, 2400);
+}
+
+function openModal(id){ $(id).classList.add("open"); }
+function closeModal(id){ $(id).classList.remove("open"); }
+document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", e => {
+  e.target.closest(".modal-backdrop").classList.remove("open");
+}));
+document.querySelectorAll(".modal-backdrop").forEach(m => m.addEventListener("click", e => {
+  if(e.target === m) m.classList.remove("open");
+}));
+
+/* ============ Clock ============ */
+function tick(){
+  const d = new Date();
+  $("clock").textContent = d.toLocaleString();
+}
+setInterval(tick, 1000); tick();
+$("year").textContent = new Date().getFullYear();
+
+/* ============ Populate staff selects ============ */
+const staffFilter = $("staffFilter");
+const txStaff = $("txStaff");
+STAFF_LIST.forEach(s => {
+  staffFilter.insertAdjacentHTML("beforeend", `<option value="${s}">${s}</option>`);
+  txStaff.insertAdjacentHTML("beforeend", `<option value="${s}">${s}</option>`);
+});
+
+/* ============ Auth state ============ */
+let isAdmin = false;
+auth.onAuthStateChanged(user => {
+  isAdmin = !!user && user.email === ADMIN_EMAIL;
+  const actions = $("headerActions");
+  if(isAdmin){
+    actions.innerHTML = `
+      <span class="user-pill">👤 ${user.email}</span>
+      <button class="btn btn-outline" id="logoutBtn">Sign out</button>`;
+    $("logoutBtn").addEventListener("click", ()=> auth.signOut());
+    $("addBtn").style.display = "inline-flex";
+    $("actionsHead").style.display = "";
+  } else {
+    actions.innerHTML = `<button class="btn btn-primary" id="loginBtn">🔐 Admin sign in</button>`;
+    $("loginBtn").addEventListener("click", ()=> openModal("loginModal"));
+    $("addBtn").style.display = "none";
+    $("actionsHead").style.display = "none";
+  }
+  render();
+});
+$("loginBtn")?.addEventListener("click", ()=> openModal("loginModal"));
+$("addBtn").addEventListener("click", ()=> openModal("addModal"));
+
+/* ============ Login ============ */
+$("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = $("loginEmail").value.trim();
+  const password = $("loginPassword").value;
+  if(email !== ADMIN_EMAIL) return showToast("Access denied", "error");
+  const btn = $("loginSubmit"); btn.disabled = true; btn.textContent = "Signing in...";
+  try{
+    await auth.signInWithEmailAndPassword(email, password);
+    showToast("Signed in", "success");
+    closeModal("loginModal");
+    $("loginForm").reset();
+  }catch{ showToast("Wrong credentials", "error"); }
+  finally{ btn.disabled = false; btn.textContent = "Sign in"; }
+});
+
+/* ============ Add transaction ============ */
+$("addForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if(!isAdmin) return showToast("Admins only", "error");
+  const staff = $("txStaff").value;
+  const type = $("txType").value;
+  const amount = Number($("txAmount").value);
+  const note = $("txNote").value.trim();
+  if(!amount || amount<=0) return showToast("Enter a valid amount", "error");
+  const btn = $("addSubmit"); btn.disabled = true; btn.textContent = "Saving...";
+  try{
+    await db.collection("transactions").add({
+      staff, type, amount, note,
+      time: new Date().toLocaleString(),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast("Transaction added", "success");
+    closeModal("addModal"); $("addForm").reset();
+  }catch{ showToast("Failed to save", "error"); }
+  finally{ btn.disabled = false; btn.textContent = "Save"; }
+});
+
+/* ============ Live data ============ */
+let allTx = [];
+db.collection("transactions").orderBy("createdAt","desc").onSnapshot(snap => {
+  allTx = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+  render();
+});
+
+/* ============ Filters ============ */
+["search","staffFilter","typeFilter"].forEach(id => $(id).addEventListener("input", render));
+
+/* ============ Render ============ */
+function render(){
+  const q = $("search").value.toLowerCase().trim();
+  const sf = $("staffFilter").value;
+  const tf = $("typeFilter").value;
+
+  // Totals from all data
+  let give=0, take=0;
+  const perStaff = {};
+  STAFF_LIST.forEach(s => perStaff[s] = {give:0, take:0});
+  allTx.forEach(t => {
+    if(t.type==="give") give += t.amount; else take += t.amount;
+    if(!perStaff[t.staff]) perStaff[t.staff] = {give:0, take:0};
+    perStaff[t.staff][t.type] += t.amount;
+  });
+
+  $("totalGive").textContent = fmt(give);
+  $("totalTake").textContent = fmt(take);
+  $("totalBalance").textContent = fmt(give - take);
+
+  // Staff cards
+  const grid = $("staffGrid");
+  grid.innerHTML = "";
+  Object.keys(perStaff).forEach((s,i) => {
+    const p = perStaff[s];
+    const bal = p.give - p.take;
+    const initials = s.split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase();
+    grid.insertAdjacentHTML("beforeend", `
+      <div class="card staff-card slide-up" style="animation-delay:${i*0.03}s">
+        <div class="name"><span class="avatar">${initials}</span>${s}</div>
+        <div class="row"><span>Given</span><b style="color:var(--success)">${fmt(p.give)}</b></div>
+        <div class="row"><span>Taken</span><b style="color:var(--danger)">${fmt(p.take)}</b></div>
+        <div class="balance"><span>Balance</span><span style="color:${bal>=0?'var(--success)':'var(--danger)'}">${fmt(bal)}</span></div>
+      </div>`);
+  });
+
+  // Table
+  const filtered = allTx.filter(t => {
+    if(sf && t.staff !== sf) return false;
+    if(tf && t.type !== tf) return false;
+    if(q && !((t.staff||"").toLowerCase().includes(q) || (t.note||"").toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  const tbody = $("tbody");
+  tbody.innerHTML = "";
+  filtered.forEach(t => {
+    const badge = t.type==="give"
+      ? `<span class="badge give">↑ দিয়েছে</span>`
+      : `<span class="badge take">↓ নিয়েছে</span>`;
+    const action = isAdmin
+      ? `<td><button class="btn btn-ghost" data-del="${t.id}" title="Delete">🗑</button></td>`
+      : "";
+    tbody.insertAdjacentHTML("beforeend", `
+      <tr>
+        <td><b>${t.staff||""}</b></td>
+        <td>${badge}</td>
+        <td style="font-weight:700;color:${t.type==='give'?'var(--success)':'var(--danger)'}">${fmt(t.amount)}</td>
+        <td style="color:var(--muted)">${t.note||"—"}</td>
+        <td style="color:var(--muted);font-size:12px">${t.time||""}</td>
+        ${action}
+      </tr>`);
+  });
+
+  $("emptyMsg").style.display = filtered.length ? "none" : "block";
+
+  // Delete handlers
+  tbody.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
+    if(!isAdmin) return;
+    if(!confirm("Delete this transaction?")) return;
+    try{
+      await db.collection("transactions").doc(b.dataset.del).delete();
+      showToast("Deleted", "success");
+    }catch{ showToast("Delete failed", "error"); }
+  }));
+}
+</script>
+</body>
+</html>
