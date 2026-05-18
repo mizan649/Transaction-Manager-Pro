@@ -70,7 +70,7 @@
   /* Header */
   .header{
     display:flex;align-items:center;justify-content:space-between;gap:16px;
-    ;backdrop-filter:blur(14px);
+    background:var(--card);backdrop-filter:blur(14px);
     border:1px solid var(--border);border-radius:var(--radius);
     padding:14px 18px;box-shadow:var(--shadow-card);
   }
@@ -106,7 +106,7 @@
     font-size:clamp(28px,4.5vw,44px);margin:0;font-weight:800;letter-spacing:-.02em;
     background:var(--gradient-hero);-webkit-background-clip:text;background-clip:text;color:transparent;
   }
-  .hero .clock{margin-top:8px;color:var(--muted);font-size:30px;font-variant-numeric:tabular-nums}
+  .hero .clock{margin-top:8px;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
 
   /* Summary cards */
   .grid{display:grid;gap:16px;margin-top:24px}
@@ -223,7 +223,7 @@
   <!-- Hero -->
   <div class="hero">
     <h2>Smart transactions, in real time</h2>
-    <div class="clock"  id="clock">—</div>
+    <div class="clock" id="clock">—</div>
   </div>
 
   <!-- Summary cards -->
@@ -311,7 +311,7 @@
           <option value="take">নিয়েছে (Take)</option>
         </select>
       </div>
-      <div class="field"><label>Amount (৳)</label><input class="input" type="number" id="txAmount" min="1" required /></div>
+      <div class="field"><label>Amount (৳)</label><input class="input" type="text" inputmode="decimal" autocomplete="off" id="txAmount" placeholder="0" required /></div>
       <div class="field"><label>Reason</label><input class="input" type="text" id="txNote" placeholder="Optional note" /></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-outline" data-close>Cancel</button>
@@ -344,7 +344,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 const ADMIN_EMAIL = "mizan.universelink@gmail.com";
-const STAFF_LIST = ["Jonayed","Hridoy","Anas","Arif","Arman","Saiful","Falan","Mizan","Sujon Sir", "Others"];
+const STAFF_LIST = ["Jonayed","Hridoy","Anas","Arif","Arman","Saiful","Falan","Mizan","Sujon Sir"];
 
 /* ============ DOM helpers ============ */
 const $ = (id) => document.getElementById(id);
@@ -422,12 +422,19 @@ $("loginForm").addEventListener("submit", async e => {
 });
 
 /* ============ Add transaction ============ */
+// Bengali digits → English, strip non-numerics live
+const bn2en = s => s.replace(/[০-৯]/g, d => "০১২৩৪৫৬৭৮৯".indexOf(d));
+$("txAmount").addEventListener("input", e => {
+  const cleaned = bn2en(e.target.value).replace(/[^0-9.]/g, "");
+  if(cleaned !== e.target.value) e.target.value = cleaned;
+});
+
 $("addForm").addEventListener("submit", async e => {
   e.preventDefault();
   if(!isAdmin) return showToast("Admins only", "error");
   const staff = $("txStaff").value;
   const type = $("txType").value;
-  const amount = Number($("txAmount").value);
+  const amount = Number(bn2en($("txAmount").value));
   const note = $("txNote").value.trim();
   if(!amount || amount<=0) return showToast("Enter a valid amount", "error");
   const btn = $("addSubmit"); btn.disabled = true; btn.textContent = "Saving...";
