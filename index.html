@@ -229,11 +229,11 @@
   <!-- Summary cards -->
   <div class="grid cols-3">
     <div class="card slide-up">
-      <div class="label">Total Given (দিয়েছে) <span class="icon green">↑</span></div>
+      <div class="label">Total Given  <span class="icon green">↑</span></div>
       <div class="value green" id="totalGive">৳0</div>
     </div>
     <div class="card slide-up" style="animation-delay:.05s">
-      <div class="label">Total Taken (নিয়েছে) <span class="icon red">↓</span></div>
+      <div class="label">Total Taken <span class="icon red">↓</span></div>
       <div class="value red" id="totalTake">৳0</div>
     </div>
     <div class="card slide-up" style="animation-delay:.1s">
@@ -254,8 +254,8 @@
     </select>
     <select class="select" id="typeFilter">
       <option value="">All types</option>
-      <option value="give">দিয়েছে (Give)</option>
-      <option value="take">নিয়েছে (Take)</option>
+      <option value="give">Given</option>
+      <option value="take">Taken</option>
     </select>
     <button class="btn btn-primary" id="addBtn" style="display:none">+ Add transaction</button>
   </div>
@@ -275,7 +275,7 @@
     <div class="empty" id="emptyMsg">No transactions yet.</div>
   </div>
 
-  <div class="footer">© <span id="year"></span> Transaction Manager Pro · Built with Firebase</div>
+  <div class="footer">© <span id="year"></span> Transaction Manager Pro · Created by Mizan</div>
 </div>
 
 <!-- Login Modal -->
@@ -307,8 +307,8 @@
       <div class="field">
         <label>Type</label>
         <select class="select" id="txType">
-          <option value="give">দিয়েছে (Give)</option>
-          <option value="take">নিয়েছে (Take)</option>
+          <option value="give">Given</option>
+          <option value="take">Taken</option>
         </select>
       </div>
       <div class="field"><label>Amount (৳)</label><input class="input" type="text" inputmode="decimal" autocomplete="off" id="txAmount" placeholder="0" required /></div>
@@ -508,8 +508,8 @@ function render(){
   tbody.innerHTML = "";
   filtered.forEach(t => {
     const badge = t.type==="give"
-      ? `<span class="badge give">↑ দিয়েছে</span>`
-      : `<span class="badge take">↓ নিয়েছে</span>`;
+      ? `<span class="badge give">↑ Given</span>`
+      : `<span class="badge take">↓ Taken</span>`;
     const action = isAdmin
       ? `<td><button class="btn btn-ghost" data-del="${t.id}" title="Delete">🗑</button></td>`
       : "";
